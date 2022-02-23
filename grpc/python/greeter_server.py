@@ -27,7 +27,7 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
         return helloworld_pb2.HelloReply(message='Hello, %s!' % request.name)
 
     def SayHelloAgain(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello you again, %s!' % request.name)
+        return helloworld_pb2.HelloReply(message='Hello again, %s!' % request.name)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
