@@ -19,10 +19,18 @@ def consume_temperature():
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
+def produce_led_command(state):
+    producer = KafkaProducer(bootstrap_servers='34.133.59.232:9092')
+    producer.
+        
 class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer):
 
     def SayTemperature(self, request, context):
         return temperature_service_pb2.TemperatureReply(temperature=current_temperature)
+    
+    def BlinkLed(self, request, context):
+        
+        return temperature_service_pb2.LedMessage(state=request.state)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -34,6 +42,6 @@ def serve():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    trd =threading.Thread(target=consume_temperature)
+    trd = threading.Thread(target=consume_temperature)
     trd.start()
     serve()
