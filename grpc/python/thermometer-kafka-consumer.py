@@ -1,4 +1,4 @@
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 import threading
 
 from concurrent import futures
@@ -21,7 +21,8 @@ def consume_temperature():
 
 def produce_led_command(state):
     producer = KafkaProducer(bootstrap_servers='34.133.59.232:9092')
-    producer.
+    producer.send('ledcommand', state)
+    return state
         
 class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer):
 
@@ -29,7 +30,7 @@ class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer)
         return temperature_service_pb2.TemperatureReply(temperature=current_temperature)
     
     def BlinkLed(self, request, context):
-        
+        produce_led_command(request.state)
         return temperature_service_pb2.LedMessage(state=request.state)
 
 def serve():
