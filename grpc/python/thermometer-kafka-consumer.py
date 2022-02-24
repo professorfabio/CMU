@@ -25,7 +25,7 @@ class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    temperature_service_pb2_grpc.add_TemperatureServiceServicer_to_server(TemperatureService(), server)
+    temperature_service_pb2_grpc.add_TemperatureServiceServicer_to_server(TemperatureServer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
