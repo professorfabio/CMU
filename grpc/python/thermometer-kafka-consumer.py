@@ -30,6 +30,7 @@ class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer)
         return temperature_service_pb2.TemperatureReply(temperature=current_temperature)
     
     def BlinkLed(self, request, context):
+        print ("Blink led with ", request.state)
         produce_led_command(request.state)
         return temperature_service_pb2.LedMessage(state=request.state)
 
