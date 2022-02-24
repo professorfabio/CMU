@@ -8,7 +8,7 @@ import grpc
 import temperature_service_pb2
 import temperature_service_pb2_grpc
 
-current_temperature = ''
+current_temperature = 'void'
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
