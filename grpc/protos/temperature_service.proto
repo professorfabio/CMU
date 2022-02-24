@@ -21,10 +21,13 @@ option objc_class_prefix = "TEMP";
 
 package temperature_service;
 
-// The greeting service definition.
+// The temperature service definition.
 service TemperatureService {
-  // Sends a greeting
+  // Responds with a temperature measurement
   rpc SayTemperature (TemperatureRequest) returns (TemperatureReply) {}
+  
+  // Send a command to the led
+  rpc BlinkLed (LedMessage) returns (LedMessage) {}
 }
 
 // The request message containing the user's name.
@@ -34,4 +37,8 @@ message TemperatureRequest {
 // The response message containing the greetings
 message TemperatureReply {
   string temperature = 1;
+}
+
+message LedMessage {
+  uint32 state = 1;
 }
