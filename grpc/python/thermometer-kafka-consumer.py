@@ -12,6 +12,7 @@ current_temperature = 'void'
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
+    global current_temperature
     consumer = KafkaConsumer(bootstrap_servers='34.133.59.232:9092')
     consumer.subscribe(topics=('temperature'))
     for msg in consumer:
