@@ -21,7 +21,7 @@ def consume_temperature():
 
 def produce_led_command(state):
     producer = KafkaProducer(bootstrap_servers='34.133.59.232:9092')
-    producer.send('ledcommand', state)
+    producer.send('ledcommand', str(state))
     return state
         
 class TemperatureServer(temperature_service_pb2_grpc.TemperatureServiceServicer):
