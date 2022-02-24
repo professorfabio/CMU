@@ -30,7 +30,7 @@ def run():
         stub = temperature_service_pb2_grpc.TemperatureServiceStub(channel)
         response = stub.SayTemperature(temperature_service_pb2.TemperatureRequest())
 
-    print("Temperature received: " + response.message)
+    print("Temperature received: " + response.temperature)
 
 if __name__ == '__main__':
     logging.basicConfig()
