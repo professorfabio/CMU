@@ -27,10 +27,10 @@ def run():
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
     with grpc.insecure_channel('104.155.147.51:50051') as channel:
-        stub = temperature_service_pb2_grpc.ThermometerServiceStub(channel)
+        stub = temperature_service_pb2_grpc.TemperatureServiceStub(channel)
         response = stub.SayTemperature(temperature_service_pb2.TemperatureRequest())
 
-    print("Thermometer client received: " + response.message)
+    print("Temperature received: " + response.message)
 
 if __name__ == '__main__':
     logging.basicConfig()
