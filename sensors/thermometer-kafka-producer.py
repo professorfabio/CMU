@@ -39,7 +39,7 @@ def consume_led_command():
     consumer = KafkaConsumer(bootstrap_servers='34.133.59.232:9092')
     consumer.subscribe(topics=('ledcommand'))
     for msg in consumer:
-        print (msg.value.decode())
+        print ('Led command received: ', msg.value.decode())
         if msg.value == 1:
             GPIO.output(16,GPIO.HIGH)
         else:
