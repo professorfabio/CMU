@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer
-import thread
+import threading
 
 from concurrent import futures
 import logging
@@ -33,5 +33,6 @@ def serve():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    thread.start_new_thread(consume_temperature,())
+    trd =threading.Thread(target=consume_temperature)
+    trd.start()
     serve()
