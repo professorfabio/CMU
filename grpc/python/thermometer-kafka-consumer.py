@@ -10,7 +10,7 @@ import temperature_service_pb2_grpc
 
 current_temperature = ''
 
-// Kafka consumer to run on a separate thread
+# Kafka consumer to run on a separate thread
 def consume_temperature():
     consumer = KafkaConsumer(bootstrap_servers='34.133.59.232:9092')
     consumer.subscribe(topics=('temperature'))
