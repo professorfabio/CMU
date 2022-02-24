@@ -29,7 +29,7 @@ def run():
     # of the code.
     with grpc.insecure_channel('104.155.147.51:50051') as channel:
         stub = temperature_service_pb2_grpc.TemperatureServiceStub(channel)
-        response = stub.BlinkLed(temperature_service_pb2.LedMessage(state=int(sys.argv[1])))
+        response = stub.BlinkLed(temperature_service_pb2.LedMessage(state=1)
 
     print("Led state: " + response.state)
 
