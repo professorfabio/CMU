@@ -18,8 +18,8 @@ from __future__ import print_function
 import logging
 
 import grpc
-import thermometer_service_pb2
-import thermometer_service_pb2_grpc
+import temperature_service_pb2
+import temperature_service_pb2_grpc
 
 
 def run():
@@ -27,8 +27,8 @@ def run():
     # used in circumstances in which the with statement does not fit the needs
     # of the code.
     with grpc.insecure_channel('104.155.147.51:50051') as channel:
-        stub = thermometer_service_pb2_grpc.ThermometerServiceStub(channel)
-        response = stub.SayTemperature(thermometer_service_pb2.TemperatureRequest())
+        stub = temperature_service_pb2_grpc.ThermometerServiceStub(channel)
+        response = stub.SayTemperature(temperature_service_pb2.TemperatureRequest())
 
     print("Thermometer client received: " + response.message)
 
