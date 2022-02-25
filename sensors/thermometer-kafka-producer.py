@@ -41,8 +41,10 @@ def consume_led_command():
     for msg in consumer:
         print ('Led command received: ', msg.value.decode())
         if msg.value == '1':
+            print ('Turning led on')
             GPIO.output(16,GPIO.HIGH)
         else:
+            print ('Turning led off')
             GPIO.output(16,GPIO.LOW)
 
 trd =threading.Thread(target=consume_led_command)
