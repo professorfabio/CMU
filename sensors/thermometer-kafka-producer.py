@@ -40,7 +40,7 @@ def consume_led_command():
     consumer.subscribe(topics=('ledcommand'))
     for msg in consumer:
         print ('Led command received: ', msg.value.decode())
-        if msg.value == 1:
+        if msg.value == '1':
             GPIO.output(16,GPIO.HIGH)
         else:
             GPIO.output(16,GPIO.LOW)
