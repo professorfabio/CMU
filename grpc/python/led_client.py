@@ -31,7 +31,10 @@ def run():
         stub = temperature_service_pb2_grpc.TemperatureServiceStub(channel)
         response = stub.BlinkLed(temperature_service_pb2.LedMessage(state=int(sys.argv[1])))
 
-    print("Led state: ", response.state)
+    if response.state == 1:
+        print("Led state is on")
+    else:
+        print("Led state is off")
 
 if __name__ == '__main__':
     logging.basicConfig()
