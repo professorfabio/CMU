@@ -14,7 +14,7 @@ GPIO.setwarnings(False) # Ignore warning for now
 GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
 GPIO.setup(16, GPIO.OUT, initial=GPIO.LOW) # Set pin 16 to be an output pin and set initial value to low (off)
 
-producer = KafkaProducer(bootstrap_servers='34.133.59.232:9092')
+producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
 last_reported = 0
 
 def read_temp_raw():
@@ -36,7 +36,7 @@ def read_temp():
         return temp_c, temp_f
 
 def consume_led_command():
-    consumer = KafkaConsumer(bootstrap_servers='34.133.59.232:9092')
+    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
     consumer.subscribe(topics=('ledcommand'))
     for msg in consumer:
         print ('Led command received: ', msg.value)

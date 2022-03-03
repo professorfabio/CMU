@@ -13,14 +13,14 @@ current_temperature = 'void'
 # Kafka consumer to run on a separate thread
 def consume_temperature():
     global current_temperature
-    consumer = KafkaConsumer(bootstrap_servers='34.133.59.232:9092')
+    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
     consumer.subscribe(topics=('temperature'))
     for msg in consumer:
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
 def produce_led_command(state):
-    producer = KafkaProducer(bootstrap_servers='34.133.59.232:9092')
+    producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
     producer.send('ledcommand', str(state).encode())
     return state
         
