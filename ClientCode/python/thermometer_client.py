@@ -8,7 +8,7 @@ import iot_service_pb2_grpc
 
 
 def run():
-    with grpc.insecure_channel('104.155.147.51:50051') as channel:
+    with grpc.insecure_channel('34.136.25.200:50051') as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub(channel)
         response = stub.SayTemperature(iot_service_pb2.TemperatureRequest(sensorName='my_sensor'))
 
