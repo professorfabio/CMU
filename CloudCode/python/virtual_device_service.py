@@ -19,9 +19,9 @@ def consume_temperature():
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
-def produce_led_command(state):
+def produce_led_command(state, ledname):
     producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
-    producer.send('ledcommand', str(state).encode())
+    producer.send('ledcommand', key=str(ledname).encode(), value=str(state).encode())
     return state
         
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
@@ -30,8 +30,9 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
         return iot_service_pb2.TemperatureReply(temperature=current_temperature)
     
     def BlinkLed(self, request, context):
-        print ("Blink led with ", request.state)
-        produce_led_command(request.state)
+        print ("Blink led ", request.ledname)
+        print ("...with state ", request.state)
+        produce_led_command(request.state, request.ledname)
         return iot_service_pb2.LedMessage(state=request.state)
 
 def serve():
