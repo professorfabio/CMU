@@ -53,5 +53,5 @@ if __name__ == '__main__':
     trd.start()
     # Initialize the state of the leds on the actual device
     for color in led_state.keys():
-        produce_led_command (ls[color], color)
+        produce_led_command (led_state[color], color)
     serve()
