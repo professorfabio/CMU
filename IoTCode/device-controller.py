@@ -44,7 +44,7 @@ def consume_led_command():
         print ('Led to blink: ', msg.key)
         if msg.key == b'red':
             ledpin = 16
-        else
+        else:
             ledpin = 18
         if msg.value == b'1':
             print ('Turning led on')
