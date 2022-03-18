@@ -38,14 +38,20 @@ def read_temp():
 def consume_led_command():
     consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
     consumer.subscribe(topics=('ledcommand'))
+    ledpin = 0
     for msg in consumer:
         print ('Led command received: ', msg.value)
+        print ('Led to blink: ', msg.key)
+        if msg.key == b'red':
+            ledpin = 16
+        else
+            ledpin = 18
         if msg.value == b'1':
             print ('Turning led on')
-            GPIO.output(16,GPIO.HIGH)
+            GPIO.output(ledpin,GPIO.HIGH)
         else:
             print ('Turning led off')
-            GPIO.output(16,GPIO.LOW)
+            GPIO.output(ledpin,GPIO.LOW)
 
 trd =threading.Thread(target=consume_led_command)
 trd.start()
