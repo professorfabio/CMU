@@ -13,6 +13,7 @@ device_file = device_folder + '/w1_slave'
 GPIO.setwarnings(False) # Ignore warning for now
 GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
 GPIO.setup(16, GPIO.OUT, initial=GPIO.LOW) # Set pin 16 to be an output pin and set initial value to low (off)
+GPIO.setup(18, GPIO.OUT, initial=GPIO.LOW) # Idem for pin 18
 
 producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
 last_reported = 0
