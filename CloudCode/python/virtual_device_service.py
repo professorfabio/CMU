@@ -8,7 +8,9 @@ import grpc
 import iot_service_pb2
 import iot_service_pb2_grpc
 
+# Twin state
 current_temperature = 'void'
+led_state = {'red':0, 'green':0}
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
@@ -21,7 +23,7 @@ def consume_temperature():
 
 def produce_led_command(state, ledname):
     producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
-    producer.send('ledcommand', key=str(ledname).encode(), value=str(state).encode())
+    producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
         
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
@@ -33,7 +35,9 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
         print ("Blink led ", request.ledname)
         print ("...with state ", request.state)
         produce_led_command(request.state, request.ledname)
-        return iot_service_pb2.LedMessage(state=request.state)
+        # Update led state of twin
+        led_state[request.ledname] = request.state
+        return iot_service_pb2.LedReply(ledstate=led_state)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -47,4 +51,7 @@ if __name__ == '__main__':
     logging.basicConfig()
     trd = threading.Thread(target=consume_temperature)
     trd.start()
+    # Initialize the state of the leds on the actual device
+    for color in led_state.keys():
+        produce_led_command (ls[color], color)
     serve()
