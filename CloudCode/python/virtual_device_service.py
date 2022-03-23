@@ -39,7 +39,7 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
         state = {}
         if request.session not in sessions:
             print('Session ', request.session, ' rejected')
-        elif request.ledname not in users[sessions[request.session]].devices:
+        elif request.ledname not in users[sessions[request.session]]['devices']:
             print('Session not authorized to access device')
         else:
             print ("Blink led ", request.ledname)
@@ -63,7 +63,7 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
             }
 
         session = -1
-        if users[request.user].password == request.password:
+        if users[request.user]['password'] == request.password:
             session = secrets.randbits(32)
             sessions[session] = request.user
 
@@ -75,7 +75,7 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
         if request.session in sessions and request.serial_key in serial_keys:
             user = sessions[request.session]
             devices = serial_keys[request.serial_key]
-            users[user].devices.update(devices)
+            users[user]['devices'].update(devices)
             print('User ', user, ' is authorized to access devices ', devices)
         else:
             print('Authorization rejected for session ', request.session, ' and key ', request.serial_key)
