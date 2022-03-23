@@ -14,6 +14,15 @@ service IoTService {
   
   // Send a command to the led
   rpc BlinkLed (LedRequest) returns (LedReply) {}
+  
+  // Connects devices under a serial key to the service
+  rpc RegisterDevices (DeviceRequest) returns (DeviceReply) {}
+  
+  // Authenticates or creates a user and returns a session
+  rpc Login (LoginRequest) returns (LoginReply) {}
+  
+  // Authorize a user to access devices under a serial key
+  rpc RegisterKey (KeyRequest) returns (KeyReply) {}
 }
 
 // The request message containing the user's name.
@@ -28,9 +37,36 @@ message TemperatureReply {
 
 message LedRequest {
   uint32 state = 1;
-  string ledname =2;
+  string ledname = 2;
+  uint32 session = 3;
 }
 
 message LedReply {
   map<string, uint32> ledstate = 1;
+}
+
+message DeviceRequest {
+  string serial_key = 1;
+  repeated string device_keys = 2;
+}
+
+message DeviceReply {
+}
+
+message LoginRequest {
+  string user = 1;
+  string password = 2;
+}
+
+message LoginReply {
+  uint32 session = 1;
+}
+
+message KeyRequest {
+  uint32 session = 1;
+  string serial_key = 2;
+}
+
+message KeyReply {
+  repeated string device_keys = 1;
 }
