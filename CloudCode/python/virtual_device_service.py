@@ -62,7 +62,7 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
                 'devices': set()
             }
 
-        session = -1
+        session = 0
         if users[request.user]['password'] == request.password:
             session = secrets.randbits(32)
             sessions[session] = request.user

@@ -5,6 +5,10 @@ import math
 import threading
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 
+import grpc
+import iot_service_pb2
+import iot_service_pb2_grpc
+
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
@@ -37,6 +41,10 @@ def read_temp():
         return temp_c, temp_f
 
 def consume_led_command():
+    with grpc.insecure_channel('34.136.25.200:50051') as channel:
+        stub = iot_service_pb2_grpc.IoTServiceStub (channel)
+        response = stub.RegisterDevices(iot_service_pb2.DeviceRequest(serial_key='ABC', device_keys=['red', 'green']))
+
     consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
     consumer.subscribe(topics=('ledcommand'))
     ledpin = 0
