@@ -23,6 +23,9 @@ service IoTService {
   
   // Authorize a user to access devices under a serial key
   rpc RegisterKey (KeyRequest) returns (KeyReply) {}
+  
+  // Query Identity Provider for authorization status of a session
+  rpc Authorize (KeyRequest) returns (AuthorizeReply) {}
 }
 
 // The request message containing the user's name.
@@ -69,4 +72,8 @@ message KeyRequest {
 
 message KeyReply {
   repeated string device_keys = 1;
+}
+
+message AuthorizeReply {
+  bool authorized = 1;
 }
