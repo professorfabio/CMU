@@ -7,73 +7,30 @@ option objc_class_prefix = "TEMP";
 
 package iot_service;
 
-// The temperature service definition.
 service IoTService {
-  // Responds with a temperature measurement
-  rpc SayTemperature (TemperatureRequest) returns (TemperatureReply) {}
   
-  // Send a command to the led
-  rpc BlinkLed (LedRequest) returns (LedReply) {}
+  // Connects a device to the service
+  rpc ConnectDevice (ConnectRequest) returns (ConnectReply) {}
   
-  // Connects devices under a serial key to the service
-  rpc RegisterDevices (DeviceRequest) returns (DeviceReply) {}
-  
-  // Authenticates or creates a user and returns a session
-  rpc Login (LoginRequest) returns (LoginReply) {}
-  
-  // Authorize a user to access devices under a serial key
-  rpc RegisterKey (KeyRequest) returns (KeyReply) {}
-  
-  // Query Identity Provider for authorization status of a session
-  rpc Authorize (KeyRequest) returns (AuthorizeReply) {}
+  // Calls an attribute over the environment
+  rpc CallAttribute (AttributeRequest) returns (AttributeReply) {}
 }
 
-// The request message containing the user's name.
-message TemperatureRequest {
-  string sensorName = 1;
+message ConnectRequest {
+  string device = 1;
+  repeated string attributes = 2;
 }
 
-// The response message containing the greetings
-message TemperatureReply {
-  string temperature = 1;
+message ConnectReply {
 }
 
-message LedRequest {
-  uint32 state = 1;
-  string ledname = 2;
-  uint32 session = 3;
-}
-
-message LedReply {
-  map<string, uint32> ledstate = 1;
-}
-
-message DeviceRequest {
-  string serial_key = 1;
-  repeated string device_keys = 2;
-}
-
-message DeviceReply {
-}
-
-message LoginRequest {
-  string user = 1;
-  string password = 2;
-}
-
-message LoginReply {
+message AttributeRequest {
   uint32 session = 1;
+  string environment = 2;
+  string attribute = 3;
+  string parameter = 4;
 }
 
-message KeyRequest {
-  uint32 session = 1;
-  string serial_key = 2;
-}
-
-message KeyReply {
-  repeated string device_keys = 1;
-}
-
-message AuthorizeReply {
-  bool authorized = 1;
+message AttributeReply {
+  string value = 1;
 }
