@@ -7,7 +7,16 @@ import id_provider_pb2
 import id_provider_pb2_grpc
 
 sessions = {} # session -> user
-users = {} # user -> {password, roles}
+users = {
+    'alice': {
+        'password': '123',
+        'roles': set(['teacher'])
+    },
+    'bob': {
+        'password': '123',
+        'roles': set(['student'])
+    }
+} # user -> {password, roles}
 
 class IdProvider(id_provider_pb2_grpc.IdProviderServicer):
     

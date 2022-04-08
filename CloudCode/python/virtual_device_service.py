@@ -14,8 +14,16 @@ import id_provider_pb2_grpc
 current_temperature = 'void'
 sessions = {} # session -> {user, roles}
 devices = {} # device -> attributes
-roles = {} # role -> attributes
-environments = {} # environment -> {devices, users}
+roles = {
+    'teacher': set(['temperature', 'led_red', 'led_green']),
+    'student': set(['temperature', 'led_green'])
+} # role -> attributes
+environments = {
+    'lab': {
+        'devices': set(['IoT_device']),
+        'users': set(['alice', 'bob'])
+    }
+} # environment -> {devices, users}
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
