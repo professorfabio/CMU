@@ -21,8 +21,6 @@ GPIO.setup(18, GPIO.OUT, initial=GPIO.LOW) # Idem for pin 18
 
 producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
 last_reported = 0
-authorized_sessions = set()
-SERIAL_KEY = 'ABC'
 
 def read_temp_raw():
     f = open(device_file, 'r')
@@ -43,35 +41,26 @@ def read_temp():
         return temp_c, temp_f
 
 def consume_led_command():
-    with grpc.insecure_channel('34.136.25.200:50051') as channel:
+    with grpc.insecure_channel('34.136.25.200:50052') as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub (channel)
-        response = stub.RegisterDevices(iot_service_pb2.DeviceRequest(serial_key=SERIAL_KEY, device_keys=['red', 'green']))
+        response = stub.ConnectDevice(iot_service_pb2.ConnectRequest(device='IoT_device', attributes=['led_red', 'led_green', 'temperature']))
 
-        consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
-        consumer.subscribe(topics=('ledcommand'))
-        ledpin = 0
-        for msg in consumer:
-            if msg.sid not in authorized_sessions:
-                response = stub.Authorize(iot_service_pb2.KeyRequest(session=int(msg.sid), serial_key=SERIAL_KEY))
-                if response.authorized:
-                    print('Confirmed authorization for session', msg.sid)
-                    authorized_sessions.add(msg.sid)
-                else:
-                    print('Unauthorized request from session', msg.sid)
-                    continue
-
-            print ('Led command received: ', msg.value)
-            print ('Led to blink: ', msg.key)
-            if msg.key == b'red':
-                ledpin = 16
-            else:
-                ledpin = 18
-            if msg.value == b'1':
-                print ('Turning led on')
-                GPIO.output(ledpin,GPIO.HIGH)
-            else:
-                print ('Turning led off')
-                GPIO.output(ledpin,GPIO.LOW)
+    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
+    consumer.subscribe(topics=('ledcommand'))
+    ledpin = 0
+    for msg in consumer:
+        print ('Led command received: ', msg.value)
+        print ('Led to blink: ', msg.key)
+        if msg.key == b'led_red':
+            ledpin = 16
+        else:
+            ledpin = 18
+        if msg.value == b'1':
+            print ('Turning led on')
+            GPIO.output(ledpin,GPIO.HIGH)
+        else:
+            print ('Turning led off')
+            GPIO.output(ledpin,GPIO.LOW)
 
 trd =threading.Thread(target=consume_led_command)
 trd.start()

@@ -3,18 +3,19 @@ import threading
 
 from concurrent import futures
 import logging
-import secrets
 
 import grpc
 import iot_service_pb2
 import iot_service_pb2_grpc
+import id_provider_pb2
+import id_provider_pb2_grpc
 
 # Twin state
 current_temperature = 'void'
-led_state = {'red':0, 'green':0}
-serial_keys = {} # key : devices
-sessions = {} # session : user
-users = {} # user : {password, serial_keys}
+sessions = {} # session -> {user, roles}
+devices = {} # device -> attributes
+roles = {} # role -> attributes
+environments = {} # environment -> {devices, users}
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
@@ -25,74 +26,76 @@ def consume_temperature():
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
-def produce_led_command(state, ledname, session):
+def produce_led_command(state, ledname):
     producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
-    producer.send('ledcommand', key=ledname.encode(), value=str(state).encode(), sid=str(session).encode())
+    producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
-        
+
+def call_attribute(environment, attribute, parameter):
+    devices = environments[environment]['devices']
+    for device in devices:
+        if attribute not in devices[device]:
+            continue
+
+        if attribute == 'temperature':
+            return current_temperature
+
+        # led
+        print ("Blink led ", attribute)
+        print ("...with state ", parameter)
+        produce_led_command(parameter, attribute)
+        return ''
+
+def validate_AttributeRequest(request):
+    if request.session not in sessions:
+        with grpc.insecure_channel('34.136.25.200:50051') as channel:
+            stub = id_provider_pb2_grpc.IdProviderStub (channel)
+            response = stub.Session(id_provider_pb2.SessionRequest(session=request.session))
+            if response.user != "":
+                sessions[request.session] = {
+                    'user': response.user,
+                    'roles': response.roles
+                }
+            else:
+                print('Session', request.session, 'rejected by identity provider')
+                return False
+
+    if request.environment not in environments:
+        print('Environment', request.environment, 'does not exist')
+        return False
+
+    credentials = sessions[request.session]
+    allowed_users = environments[request.environment]['users']
+    if credentials.user not in allowed_users:
+        print('User', credentials.user, 'not authorized to access environment', request.environment)
+        return False
+    
+    for role in credentials['roles']:
+        if request.attribute in roles[role]:
+            return True
+    
+    print('User', credentials.user, 'not authorized to access attribute', request.attribute)
+    return False
+
+
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
 
-    def SayTemperature(self, request, context):
-        return iot_service_pb2.TemperatureReply(temperature=current_temperature)
+    def CallAttribute(self, request, context):
+        value = ''
+        if validate_AttributeRequest(request):
+            value = call_attribute(request.environment, request.attribute, request.parameter)
+        return iot_service_pb2.AttributeReply(value=value)
     
-    def BlinkLed(self, request, context):
-        state = {}
-        if request.session not in sessions:
-            print('Session', request.session, 'rejected')
-        else:
-            print ("Blink led ", request.ledname)
-            print ("...with state ", request.state)
-            produce_led_command(request.state, request.ledname, request.session)
-            # Update led state of twin
-            led_state[request.ledname] = request.state
-            state = led_state
-        return iot_service_pb2.LedReply(ledstate=state)
-    
-    def RegisterDevices(self, request, context):
-        print('Registering devices', request.device_keys, 'under serial key', request.serial_key)
-        serial_keys[request.serial_key] = request.device_keys
-        return iot_service_pb2.DeviceReply()
-    
-    def Login(self, request, context):
-        if request.user not in users:
-            users[request.user] = {
-                'password': request.password,
-                'serial_keys': set()
-            }
-
-        session = 0
-        if users[request.user]['password'] == request.password:
-            session = secrets.randbits(32)
-            sessions[session] = request.user
-
-        print('Login from user', request.user, 'returned session', session)
-        return iot_service_pb2.LoginReply(session=session)
-
-    def RegisterKey(self, request, context):
-        devices = set()
-        if request.session in sessions and request.serial_key in serial_keys:
-            user = sessions[request.session]
-            devices = serial_keys[request.serial_key]
-            users[user]['serial_keys'].add(request.serial_key)
-            print('User', user, 'acquired serial key', request.serial_key)
-        else:
-            print('Key registration rejected for session', request.session, 'and key', request.serial_key)
-
-        return iot_service_pb2.KeyReply(device_keys=devices)
-
-    def Authorize(self, request, context):
-        authorized = request.session in sessions and request.serial_key in users[sessions[request.session]]['serial_keys']
-        print('Authorization for session', request.session, 'to serial key', request.serial_key, 'is', authorized)
-
-        return iot_service_pb2.AuthorizeReply(authorized=authorized)
-
-
+    def ConnectDevice(self, request, context):
+        print('Adding device', request.device, 'with attributes', request.attributes, 'to the cloud')
+        devices[request.device] = request.attributes
+        return iot_service_pb2.ConnectReply()
 
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     iot_service_pb2_grpc.add_IoTServiceServicer_to_server(IoTServer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:50052')
     server.start()
     server.wait_for_termination()
 
@@ -101,7 +104,4 @@ if __name__ == '__main__':
     logging.basicConfig()
     trd = threading.Thread(target=consume_temperature)
     trd.start()
-    # Initialize the state of the leds on the actual device
-    for color in led_state.keys():
-        produce_led_command (led_state[color], color)
     serve()
