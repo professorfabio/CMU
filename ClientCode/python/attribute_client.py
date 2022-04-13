@@ -12,7 +12,7 @@ def run():
     with grpc.insecure_channel(sys.argv[1]) as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub (channel)
         parameter = ''
-        if sys.argc >= 6:
+        if len(sys.argv) >= 6:
             parameter = sys.argv[5]
         response = stub.CallAttribute(iot_service_pb2.AttributeRequest(
             session=int(sys.argv[2]),
@@ -24,7 +24,7 @@ def run():
     print('Response:', response.value)
 
 if __name__ == '__main__':
-    if sys.argc == 5 or sys.argc == 6:
+    if len(sys.argv) == 5 or len(sys.argv) == 6:
         logging.basicConfig()
         run()
     else:

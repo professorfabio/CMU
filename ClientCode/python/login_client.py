@@ -15,7 +15,7 @@ def run():
     print('Login returned session', response.session)
 
 if __name__ == '__main__':    
-    if sys.argc == 4:
+    if len(sys.argv) == 4:
         logging.basicConfig()
         run()
     else:

@@ -128,7 +128,7 @@ def serve():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    if sys.argc == 3:
+    if len(sys.argv) == 3:
         trd = threading.Thread(target=consume_temperature)
         trd.start()
         serve()

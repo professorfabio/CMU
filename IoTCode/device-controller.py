@@ -144,7 +144,7 @@ def consume_morse_command():
             else:
                 sleep(dit)
 
-if sys.argc == 3:
+if len(sys.argv) == 3:
     trd =threading.Thread(target=consume_led_command)
     trd.start()
     trd = threading.Thread(target=consume_morse_command)
