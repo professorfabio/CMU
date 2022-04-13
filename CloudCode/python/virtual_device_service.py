@@ -40,6 +40,10 @@ def produce_led_command(state, ledname):
     producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
 
+def produce_morse_command(text):
+    producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
+    producer.send('morse', value=text.encode())
+
 def call_attribute(environment, attribute, parameter):
     for device in environments[environment]['devices']:
         
@@ -50,13 +54,15 @@ def call_attribute(environment, attribute, parameter):
             return current_temperature
 
         if attribute == 'morse':
-            return morse(parameter)
+            produce_morse_command(parameter)
+            return 'Outputting morse code'
 
         # led
         print ("Blink led ", attribute)
         print ("...with state ", parameter)
         produce_led_command(parameter, attribute)
-        return ''
+        return 'Led blinked'
+        
     return 'No device able to call the attribute in the environment'
 
 def validate_AttributeRequest(request):
