@@ -3,46 +3,118 @@ import threading
 
 from concurrent import futures
 import logging
+import sys
 
 import grpc
 import iot_service_pb2
 import iot_service_pb2_grpc
+import id_provider_pb2
+import id_provider_pb2_grpc
 
 # Twin state
 current_temperature = 'void'
-led_state = {'red':0, 'green':0}
+sessions = {} # session -> {user, roles}
+device_attributes = {} # device -> attributes
+role_attributes = {
+    'teacher': {'temperature', 'led_red', 'led_green', 'morse'},
+    'student': {'temperature', 'led_green', 'morse'}
+} # role -> attributes
+environments = {
+    'lab': {
+        'devices': ['IoT_device'],
+        'users': {'alice', 'bob'}
+    }
+} # environment -> {devices, users}
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
     global current_temperature
-    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
     consumer.subscribe(topics=('temperature'))
     for msg in consumer:
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
 def produce_led_command(state, ledname):
-    producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
+    producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
     producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
+
+def produce_morse_command(text):
+    producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
+    producer.send('morse', value=text.encode())
+
+def call_attribute(environment, attribute, parameter):
+    for device in environments[environment]['devices']:
         
+        if device not in device_attributes or attribute not in device_attributes[device]:
+            continue
+
+        if attribute == 'temperature':
+            return current_temperature
+
+        if attribute == 'morse':
+            produce_morse_command(parameter)
+            return 'Outputting morse code'
+
+        # led
+        print ("Blink led ", attribute)
+        print ("...with state ", parameter)
+        produce_led_command(parameter, attribute)
+        return 'Led blinked'
+        
+    return 'No device able to call the attribute in the environment'
+
+def validate_AttributeRequest(request):
+    if request.session not in sessions:
+        with grpc.insecure_channel(sys.argv[1] + ':50051') as channel:
+            stub = id_provider_pb2_grpc.IdProviderStub (channel)
+            response = stub.Session(id_provider_pb2.SessionRequest(session=request.session))
+            if response.user != "":
+                sessions[request.session] = {
+                    'user': response.user,
+                    'roles': response.roles
+                }
+            else:
+                print('Session', request.session, 'rejected by identity provider')
+                return False
+
+    if request.environment not in environments:
+        print('Environment', request.environment, 'does not exist')
+        return False
+
+    credentials = sessions[request.session]
+    allowed_users = environments[request.environment]['users']
+    if credentials['user'] not in allowed_users:
+        print('User', credentials['user'], 'not authorized to access environment', request.environment)
+        return False
+    
+    for role in credentials['roles']:
+        if request.attribute in role_attributes[role]:
+            return True
+    
+    print('User', credentials['user'], 'not authorized to access attribute', request.attribute)
+    return False
+
+
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
 
-    def SayTemperature(self, request, context):
-        return iot_service_pb2.TemperatureReply(temperature=current_temperature)
+    def CallAttribute(self, request, context):
+        value = 'ERRO Chamada invalida'
+        if validate_AttributeRequest(request):
+            value = call_attribute(request.environment, request.attribute, request.parameter)
+        return iot_service_pb2.AttributeReply(value=value)
     
-    def BlinkLed(self, request, context):
-        print ("Blink led ", request.ledname)
-        print ("...with state ", request.state)
-        produce_led_command(request.state, request.ledname)
-        # Update led state of twin
-        led_state[request.ledname] = request.state
-        return iot_service_pb2.LedReply(ledstate=led_state)
+    def ConnectDevice(self, request, context):
+        print('Adding device', request.device, 'with attributes', request.attributes, 'to the cloud')
+        device_attributes[request.device] = request.attributes
+        return iot_service_pb2.ConnectReply()
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     iot_service_pb2_grpc.add_IoTServiceServicer_to_server(IoTServer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:50052')
     server.start()
     server.wait_for_termination()
 
@@ -51,7 +123,4 @@ if __name__ == '__main__':
     logging.basicConfig()
     trd = threading.Thread(target=consume_temperature)
     trd.start()
-    # Initialize the state of the leds on the actual device
-    for color in led_state.keys():
-        produce_led_command (led_state[color], color)
     serve()
