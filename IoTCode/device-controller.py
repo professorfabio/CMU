@@ -60,7 +60,7 @@ morse_table = {
     '8': '_ _ _ . .',
     '9': '_ _ _ _ .',
     '0': '_ _ _ _ _',
-    ' ': '    '
+    ' ': ' '
 }
 
 def morse(text):
@@ -115,8 +115,9 @@ def consume_morse_command():
     consumer.subscribe(topics=('morse'))
 
     for msg in consumer:
-        print ('Morse command received:', msg.value)
-        code = morse(msg.value)
+        text = msg.value.decode()
+        print ('Morse command received:', text)
+        code = morse(text)
         print ('Output:', code)
 
 trd =threading.Thread(target=consume_led_command)
