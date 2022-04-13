@@ -122,7 +122,7 @@ def consume_morse_command():
         print ('Output:', code)
 
         ledpin = 18
-        dit = .5
+        dit = .3
         for c in code:
             if c == ' ':
                 GPIO.output(ledpin, GPIO.LOW)
