@@ -23,6 +23,53 @@ GPIO.setup(18, GPIO.OUT, initial=GPIO.LOW) # Idem for pin 18
 producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
 last_reported = 0
 
+morse_table = {
+    'a': '. _',
+    'b': '_ . . .',
+    'c': '_ . _ .',
+    'd': '_ . .',
+    'e': '.',
+    'f': '. . _ .',
+    'g': '_ _ .',
+    'h': '. . . .',
+    'i': '. .',
+    'j': '. _ _ _',
+    'k': '_ . _',
+    'l': '. _ . .',
+    'm': '_ _',
+    'n': '_ .',
+    'o': '_ _ _',
+    'p': '. _ _ .',
+    'q': '_ _ . _',
+    'r': '. _ .',
+    's': '. . .',
+    't': '_',
+    'u': '. . _',
+    'v': '. . . _',
+    'w': '. _ _',
+    'x': '_ . . _',
+    'y': '_ . _ _',
+    'z': '_ _ . .',
+    '1': '. _ _ _ _',
+    '2': '. . _ _ _',
+    '3': '. . . _ _',
+    '4': '. . . . _',
+    '5': '. . . . .',
+    '6': '_ . . . .',
+    '7': '_ _ . . .',
+    '8': '_ _ _ . .',
+    '9': '_ _ _ _ .',
+    '0': '_ _ _ _ _',
+    ' ': '    '
+}
+
+def morse(text):
+    morse = ''
+    for c in ' '.join(text.lower().split()):
+        if c in morse_table:
+            morse += morse_table[c] + '   '
+    return morse
+
 def read_temp_raw():
     f = open(device_file, 'r')
     lines = f.readlines()
@@ -44,7 +91,7 @@ def read_temp():
 def consume_led_command():
     with grpc.insecure_channel(sys.argv[1] + ':50052') as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub (channel)
-        response = stub.ConnectDevice(iot_service_pb2.ConnectRequest(device='IoT_device', attributes=['led_red', 'led_green', 'temperature']))
+        response = stub.ConnectDevice(iot_service_pb2.ConnectRequest(device='IoT_device', attributes=['led_red', 'led_green', 'temperature', 'morse']))
 
     consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
     consumer.subscribe(topics=('ledcommand'))
@@ -63,7 +110,18 @@ def consume_led_command():
             print ('Turning led off')
             GPIO.output(ledpin,GPIO.LOW)
 
+def consume_morse_command():
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
+    consumer.subscribe(topics=('morse'))
+
+    for msg in consumer:
+        print ('Morse command received:', msg.value)
+        code = morse(msg.value)
+        print ('Output:', code)
+
 trd =threading.Thread(target=consume_led_command)
+trd.start()
+trd = threading.Thread(target=consume_morse_command)
 trd.start()
 
 while True:

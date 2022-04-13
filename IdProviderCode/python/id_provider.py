@@ -15,6 +15,10 @@ users = {
     'bob': {
         'password': '123',
         'roles': set(['student'])
+    },
+    'charlie': {
+        'password': '123',
+        'roles': set()
     }
 } # user -> {password, roles}
 

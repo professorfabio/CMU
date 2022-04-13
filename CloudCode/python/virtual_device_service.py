@@ -16,8 +16,8 @@ current_temperature = 'void'
 sessions = {} # session -> {user, roles}
 device_attributes = {} # device -> attributes
 role_attributes = {
-    'teacher': {'temperature', 'led_red', 'led_green'},
-    'student': {'temperature', 'led_green'}
+    'teacher': {'temperature', 'led_red', 'led_green', 'morse'},
+    'student': {'temperature', 'led_green', 'morse'}
 } # role -> attributes
 environments = {
     'lab': {
@@ -51,7 +51,7 @@ def call_attribute(environment, attribute, parameter):
 
         if attribute == 'morse':
             return morse(parameter)
-            
+
         # led
         print ("Blink led ", attribute)
         print ("...with state ", parameter)
@@ -118,50 +118,3 @@ if __name__ == '__main__':
     trd = threading.Thread(target=consume_temperature)
     trd.start()
     serve()
-
-morse_table = {
-    'a': '. _',
-    'b': '_ . . .',
-    'c': '_ . _ .',
-    'd': '_ . .',
-    'e': '.',
-    'f': '. . _ .',
-    'g': '_ _ .',
-    'h': '. . . .',
-    'i': '. .',
-    'j': '. _ _ _',
-    'k': '_ . _',
-    'l': '. _ . .',
-    'm': '_ _',
-    'n': '_ .',
-    'o': '_ _ _',
-    'p': '. _ _ .',
-    'q': '_ _ . _',
-    'r': '. _ .',
-    's': '. . .',
-    't': '_',
-    'u': '. . _',
-    'v': '. . . _',
-    'w': '. _ _',
-    'x': '_ . . _',
-    'y': '_ . _ _',
-    'z': '_ _ . .',
-    '1': '. _ _ _ _',
-    '2': '. . _ _ _',
-    '3': '. . . _ _',
-    '4': '. . . . _',
-    '5': '. . . . .',
-    '6': '_ . . . .',
-    '7': '_ _ . . .',
-    '8': '_ _ _ . .',
-    '9': '_ _ _ _ .',
-    '0': '_ _ _ _ _',
-    ' ': '    '
-}
-
-def morse(text):
-    morse = ''
-    for c in ' '.join(text.lower().split()):
-        if c in morse_table:
-            morse += morse_table[c] + '   '
-    return morse
