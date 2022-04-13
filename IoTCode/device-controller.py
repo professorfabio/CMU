@@ -2,6 +2,7 @@ import glob
 import time
 import sys
 from kafka import KafkaProducer, KafkaConsumer
+from time import sleep
 import math
 import threading
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
@@ -119,6 +120,19 @@ def consume_morse_command():
         print ('Morse command received:', text)
         code = morse(text)
         print ('Output:', code)
+
+        ledpin = 18
+        dit = .5
+        for c in code:
+            if c == ' ':
+                GPIO.output(ledpin, GPIO.LOW)
+            else:
+                GPIO.output(ledpin, GPIO.HIGH)
+            
+            if c == '_':
+                sleep(3 * dit)
+            else:
+                sleep(dit)
 
 trd =threading.Thread(target=consume_led_command)
 trd.start()
