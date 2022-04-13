@@ -14,14 +14,14 @@ import id_provider_pb2_grpc
 # Twin state
 current_temperature = 'void'
 sessions = {} # session -> {user, roles}
-devices = {} # device -> attributes
+device_attributes = {} # device -> attributes
 roles = {
     'teacher': {'temperature', 'led_red', 'led_green'},
     'student': {'temperature', 'led_green'}
 } # role -> attributes
 environments = {
     'lab': {
-        'devices': {'IoT_device'},
+        'devices': ['IoT_device'],
         'users': {'alice', 'bob'}
     }
 } # environment -> {devices, users}
@@ -41,9 +41,8 @@ def produce_led_command(state, ledname):
     return state
 
 def call_attribute(environment, attribute, parameter):
-    devices = environments[environment]['devices']
-    for device in devices:
-        if attribute not in devices[device]:
+    for device in environments[environment]['devices']:
+        if attribute not in device_attributes[device]:
             continue
 
         if attribute == 'temperature':
@@ -97,7 +96,7 @@ class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
     
     def ConnectDevice(self, request, context):
         print('Adding device', request.device, 'with attributes', request.attributes, 'to the cloud')
-        devices[request.device] = request.attributes
+        device_attributes[request.device] = request.attributes
         return iot_service_pb2.ConnectReply()
 
 
