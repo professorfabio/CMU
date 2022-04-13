@@ -42,7 +42,8 @@ def produce_led_command(state, ledname):
 
 def call_attribute(environment, attribute, parameter):
     for device in environments[environment]['devices']:
-        if attribute not in device_attributes[device]:
+        
+        if device not in device_attributes or attribute not in device_attributes[device]:
             continue
 
         if attribute == 'temperature':
@@ -53,6 +54,7 @@ def call_attribute(environment, attribute, parameter):
         print ("...with state ", parameter)
         produce_led_command(parameter, attribute)
         return ''
+    return 'No device able to call the attribute in the environment'
 
 def validate_AttributeRequest(request):
     if request.session not in sessions:
@@ -75,21 +77,21 @@ def validate_AttributeRequest(request):
     credentials = sessions[request.session]
     allowed_users = environments[request.environment]['users']
     if credentials['user'] not in allowed_users:
-        print('User', credentials.user, 'not authorized to access environment', request.environment)
+        print('User', credentials['user'], 'not authorized to access environment', request.environment)
         return False
     
     for role in credentials['roles']:
         if request.attribute in roles[role]:
             return True
     
-    print('User', credentials.user, 'not authorized to access attribute', request.attribute)
+    print('User', credentials['user'], 'not authorized to access attribute', request.attribute)
     return False
 
 
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
 
     def CallAttribute(self, request, context):
-        value = 'ERRO Chamada inválida'
+        value = 'ERRO Chamada invalida'
         if validate_AttributeRequest(request):
             value = call_attribute(request.environment, request.attribute, request.parameter)
         return iot_service_pb2.AttributeReply(value=value)
