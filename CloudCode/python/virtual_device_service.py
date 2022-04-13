@@ -3,6 +3,7 @@ import threading
 
 from concurrent import futures
 import logging
+import sys
 
 import grpc
 import iot_service_pb2
@@ -15,27 +16,27 @@ current_temperature = 'void'
 sessions = {} # session -> {user, roles}
 devices = {} # device -> attributes
 roles = {
-    'teacher': set(['temperature', 'led_red', 'led_green']),
-    'student': set(['temperature', 'led_green'])
+    'teacher': {'temperature', 'led_red', 'led_green'},
+    'student': {'temperature', 'led_green'}
 } # role -> attributes
 environments = {
     'lab': {
-        'devices': set(['IoT_device']),
-        'users': set(['alice', 'bob'])
+        'devices': {'IoT_device'},
+        'users': {'alice', 'bob'}
     }
 } # environment -> {devices, users}
 
 # Kafka consumer to run on a separate thread
 def consume_temperature():
     global current_temperature
-    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
     consumer.subscribe(topics=('temperature'))
     for msg in consumer:
         print (msg.value.decode())
         current_temperature = msg.value.decode()
 
 def produce_led_command(state, ledname):
-    producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
+    producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
     producer.send('ledcommand', key=ledname.encode(), value=str(state).encode())
     return state
 
@@ -56,7 +57,7 @@ def call_attribute(environment, attribute, parameter):
 
 def validate_AttributeRequest(request):
     if request.session not in sessions:
-        with grpc.insecure_channel('34.136.25.200:50051') as channel:
+        with grpc.insecure_channel(sys.argv[1] + ':50051') as channel:
             stub = id_provider_pb2_grpc.IdProviderStub (channel)
             response = stub.Session(id_provider_pb2.SessionRequest(session=request.session))
             if response.user != "":
@@ -74,7 +75,7 @@ def validate_AttributeRequest(request):
 
     credentials = sessions[request.session]
     allowed_users = environments[request.environment]['users']
-    if credentials.user not in allowed_users:
+    if credentials['user'] not in allowed_users:
         print('User', credentials.user, 'not authorized to access environment', request.environment)
         return False
     
@@ -89,7 +90,7 @@ def validate_AttributeRequest(request):
 class IoTServer(iot_service_pb2_grpc.IoTServiceServicer):
 
     def CallAttribute(self, request, context):
-        value = ''
+        value = 'ERRO Chamada inválida'
         if validate_AttributeRequest(request):
             value = call_attribute(request.environment, request.attribute, request.parameter)
         return iot_service_pb2.AttributeReply(value=value)

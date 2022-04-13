@@ -1,5 +1,6 @@
 import glob
 import time
+import sys
 from kafka import KafkaProducer, KafkaConsumer
 import math
 import threading
@@ -19,7 +20,7 @@ GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
 GPIO.setup(16, GPIO.OUT, initial=GPIO.LOW) # Set pin 16 to be an output pin and set initial value to low (off)
 GPIO.setup(18, GPIO.OUT, initial=GPIO.LOW) # Idem for pin 18
 
-producer = KafkaProducer(bootstrap_servers='35.226.115.184:9092')
+producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
 last_reported = 0
 
 def read_temp_raw():
@@ -41,11 +42,11 @@ def read_temp():
         return temp_c, temp_f
 
 def consume_led_command():
-    with grpc.insecure_channel('34.136.25.200:50052') as channel:
+    with grpc.insecure_channel(sys.argv[1] + ':50052') as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub (channel)
         response = stub.ConnectDevice(iot_service_pb2.ConnectRequest(device='IoT_device', attributes=['led_red', 'led_green', 'temperature']))
 
-    consumer = KafkaConsumer(bootstrap_servers='35.226.115.184:9092')
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
     consumer.subscribe(topics=('ledcommand'))
     ledpin = 0
     for msg in consumer:

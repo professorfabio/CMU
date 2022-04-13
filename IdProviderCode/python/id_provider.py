@@ -22,7 +22,7 @@ class IdProvider(id_provider_pb2_grpc.IdProviderServicer):
     
     def Login(self, request, context):
         session = 0
-        if users[request.user]['password'] == request.password:
+        if request.user in users and users[request.user]['password'] == request.password:
             session = secrets.randbits(32)
             sessions[session] = request.user
 
