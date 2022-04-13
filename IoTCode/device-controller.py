@@ -5,6 +5,7 @@ from kafka import KafkaProducer, KafkaConsumer
 from time import sleep
 import math
 import threading
+import requests
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 
 import grpc
@@ -118,7 +119,15 @@ def consume_morse_command():
     for msg in consumer:
         text = msg.value.decode()
         print ('Morse command received:', text)
-        code = morse(text)
+
+        code = ''
+        if len(text) < 20:
+            code = morse(text)
+        else:
+            print('Offloading morse encoding to cloud function')
+            r = requests.get('http://us-central1-cmu-2021-2.cloudfunctions.net/morse', params={'message': text})
+            code = r.text
+
         print ('Output:', code)
 
         ledpin = 18
