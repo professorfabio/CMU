@@ -22,7 +22,7 @@ GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
 GPIO.setup(16, GPIO.OUT, initial=GPIO.LOW) # Set pin 16 to be an output pin and set initial value to low (off)
 GPIO.setup(18, GPIO.OUT, initial=GPIO.LOW) # Idem for pin 18
 
-producer = KafkaProducer(bootstrap_servers=sys.argv[2] + ':9092')
+producer = KafkaProducer(bootstrap_servers=sys.argv[2])
 last_reported = 0
 
 morse_table = {
@@ -91,11 +91,12 @@ def read_temp():
         return temp_c, temp_f
 
 def consume_led_command():
-    with grpc.insecure_channel(sys.argv[1] + ':50052') as channel:
+    with grpc.insecure_channel(sys.argv[1]) as channel:
         stub = iot_service_pb2_grpc.IoTServiceStub (channel)
         response = stub.ConnectDevice(iot_service_pb2.ConnectRequest(device='IoT_device', attributes=['led_red', 'led_green', 'temperature', 'morse']))
+        print('Device connected to the virtual device service')
 
-    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2])
     consumer.subscribe(topics=('ledcommand'))
     ledpin = 0
     for msg in consumer:
@@ -113,7 +114,7 @@ def consume_led_command():
             GPIO.output(ledpin,GPIO.LOW)
 
 def consume_morse_command():
-    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2] + ':9092')
+    consumer = KafkaConsumer(bootstrap_servers=sys.argv[2])
     consumer.subscribe(topics=('morse'))
 
     for msg in consumer:
@@ -143,15 +144,20 @@ def consume_morse_command():
             else:
                 sleep(dit)
 
-trd =threading.Thread(target=consume_led_command)
-trd.start()
-trd = threading.Thread(target=consume_morse_command)
-trd.start()
+if sys.argc == 3:
+    trd =threading.Thread(target=consume_led_command)
+    trd.start()
+    trd = threading.Thread(target=consume_morse_command)
+    trd.start()
 
-while True:
-    (temp_c, temp_f) = read_temp()
-    print(temp_c, temp_f)
-    if (math.fabs(temp_c - last_reported) >= 0.1):
-        last_reported = temp_c
-        producer.send('temperature', str(temp_c).encode())
-    time.sleep(1)
+    while True:
+        (temp_c, temp_f) = read_temp()
+        print(temp_c, temp_f)
+        if (math.fabs(temp_c - last_reported) >= 0.1):
+            last_reported = temp_c
+            producer.send('temperature', str(temp_c).encode())
+        time.sleep(1)
+else:
+    print('Expected arguments: [iot_server] [bootstrap_server]')
+    print('iot_server - Hostname and port of the virtual device service')
+    print('bootstrap_server - Hostname and port of the kafka broker')
